@@ -19,7 +19,7 @@ function show(svg, path) {
 	var scales = getScale(x, y)	
 	
 	var topicsGroups = svg.selectAll("g")
-	    .data(multiLinesData(data)).enter().append("g")
+	    .data(multiLinesData(data)).enter().append("g").attr("class", "topicGroups")
 	
 	var topicLineFunction = d3.svg.line()
 	    .x(function(d) { return scales.x(d[x]) })
@@ -65,7 +65,7 @@ function topicLine(scales, x, y) {
 function multiLinesData(data) {
     var multiLines = []
     var nDims = 10
-    var nTopics = 30;//data.topics.length
+    var nTopics = data.topics.length
     for (i = 0; i < nTopics; i++) {
 	var lineData = []
 	var zeroPoint = {}
@@ -174,4 +174,14 @@ function switchDimension(dims) {
     svg.selectAll('.topicLine')
 	.transition().duration(2000)
 	.attr("d", function(d) { return topicLine(scales, x, y)(d.vector)})
+
+    d3.selectAll(".topicGroups")
+	.style("visibility", "hidden")
+	.filter(function(d) {  return topicVectorLength(d, x, y) > .2 })
+	.style("visibility", "visible")
+}
+
+function topicVectorLength(d, x, y) {
+    console.log(d.vector[1])
+    return Math.sqrt(d.vector[1][x] * d.vector[1][x] + d.vector[1][y] * d.vector[1][y])
 }

@@ -31,7 +31,10 @@
     var height=600;
     var widthMargin = 40;
     var heightMargin = 20;
-    var featureNamesToRanges={"1": [-.2, .2], "2": [-.2, .2], "3": [-.2, .2], "4": [-.2, .2]};
+    var featureNamesToRanges = {}
+    for (i = 0; i < 10; i++) {
+		    featureNamesToRanges[i] = [-.5, .5]}
+		    //"1": [-.2, .2], "2": [-.2, .2], "3": [-.2, .2], "4": [-.2, .2]};
 
     var featureNames = Object.keys(featureNamesToRanges);
     console.info(featureNames)
