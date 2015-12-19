@@ -18,38 +18,31 @@ function show(svg, path) {
 
 	var scales = getScale(x, y)	
 	
-	// Topics
-	for (i = 0; i < 20; i++) {
-	    
-	    var xys = [ { [x]:0, [y]:0}, { [x]: data.topics[i][x], [y]: data.topics[i][y]} ]
-
-	    var id = "topics" + i
-	    var lineGraph =
-		svg.append("path").attr("id", id).attr("class", "lines")
-		.attr("d", line(scales, x, y)(xys))
-		.attr("stroke", "lightgrey")
-		.attr("stroke-width", 2)
-		.attr("fill", "none");
-
-	    svg.append('text')
-		.append('textPath')
-		.attr({
-		    startOffset: '50%',
-		    'xlink:href': '#' + id
-		})
-		.text(data.topics[i].words)
-		.attr("fill", "lightgrey");
-	}
-
-	var multilineGraph = svg.selectAll(".line")
-	    .data(multiLinesData(data))
-	    .enter().append("path")
-	    .attr("class", "line")
-	    .attr("d", line(scales, x, y))
+	var topicsGroups = svg.selectAll("g")
+	    .data(multiLinesData(data)).enter().append("g")
+	
+	var topicLineFunction = d3.svg.line()
+	    .x(function(d) { return scales.x(d[x]) })
+	    .y(function(d) { return scales.y(d[y]) })
+	    .interpolate("linear")
+	
+	var multilineGraph = topicsGroups
+	    .append("path")
+	    .attr("id", function(d) { return d.id})
+	    .attr("class", "topicLine")
+	    .attr("d", function(d) { return topicLine(scales, x, y)(d.vector)})
 	    .attr("stroke", "blue")
 	    .attr("stroke-width", 2)
 	    .attr("fill", "none")
-	
+
+	topicsGroups
+	    .append('text')
+	    .append('textPath')
+	    .attr('startOffset', '50%')
+	    .attr('xlink:href', function (d) {return '#' + d.id})
+	    .text(function (d) {return d.words})
+	    .attr("fill", "blue")
+	    	
 	console.info("scales")
 
 	draw(scales, svg.selectAll('circle'), featureNames[0], featureNames[1])
@@ -60,30 +53,34 @@ function show(svg, path) {
     });
 }
 
+function topicLine(scales, x, y) {
+    console.log("line func")
+    var lineFunction = d3.svg.line()
+	.x(function(d) { console.log(d); return scales.x(d[x]) })
+	.y(function(d) { return scales.y(d[y]) })
+	.interpolate("linear")
+    return lineFunction
+}
+
 function multiLinesData(data) {
     var multiLines = []
-    var nTopics = 10
-    for (i = 0; i < data.topics.length; i++) {
+    var nDims = 10
+    var nTopics = 30;//data.topics.length
+    for (i = 0; i < nTopics; i++) {
 	var lineData = []
 	var zeroPoint = {}
 	var topicPoint = {}
-	for (j = 0; j < nTopics; j++) {
+	for (j = 0; j < nDims; j++) {
 	    zeroPoint[j] = 0
 	    topicPoint[j] = data.topics[i][j]
 	}
 	lineData.push(zeroPoint)
 	lineData.push(topicPoint)
-	multiLines.push(lineData)
+	var topicName = "topic" + i
+	multiLines.push({ "id": topicName, "vector":lineData, "words": data.topics[i].words})
     }
+    
     return multiLines
-}
-
-function line(scales, x, y) {
-    var lineFunction = d3.svg.line()
-	.x(function(d) { return scales.x(d[x]) })
-	.y(function(d) { return scales.y(d[y]) })
-	.interpolate("linear")
-    return lineFunction
 }
 
 function draw(scales, svgCircles, featureForX, featureForY) {
@@ -173,4 +170,8 @@ function switchDimension(dims) {
     	//.attr("d", line(scales, x, y)(xys))
 
     draw(scales, svg.selectAll('circle').transition().duration(2000), x, y)
+
+    svg.selectAll('.topicLine')
+	.transition().duration(2000)
+	.attr("d", function(d) { return topicLine(scales, x, y)(d.vector)})
 }
