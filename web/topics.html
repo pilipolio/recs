@@ -25,23 +25,16 @@
     <div id="topics_biplot"></div>
     
     <script>
-    var sectionsToColor = {"meninger": "red", "verden": "green", "osloby": "blue", "misc": "grey", "innenriks":"cyan", "økonomi":"yellow"};
+
 
     var width=640;
     var height=600;
     var widthMargin = 40;
     var heightMargin = 20;
-    var featureNamesToRanges = {}
-    for (i = 0; i < 10; i++) {
-		    featureNamesToRanges[i] = [-.5, .5]}
-		    //"1": [-.2, .2], "2": [-.2, .2], "3": [-.2, .2], "4": [-.2, .2]};
-
-    var featureNames = Object.keys(featureNamesToRanges);
-    console.info(featureNames)
     
     var svg = d3.select('#topics_biplot').append('svg').attr('width', width).attr('height', height);
 
-    show(svg, "articles_topics.json");
+    show(svg, "users_articles_topics.json");
 
     </script>
   </body>

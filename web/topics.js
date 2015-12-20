@@ -1,37 +1,54 @@
+var sectionsToColor = {"meninger": "red", "verden": "green", "osloby": "blue", "misc": "grey", "innenriks":"cyan", "økonomi":"yellow"};
+
+var featureNamesToRanges = {}
+
+for (i = 0; i < 10; i++) {
+    featureNamesToRanges[i] = [-.2, .2]}
+
+
+var featureNames = Object.keys(featureNamesToRanges);
+console.info(featureNames)
+ 
 function show(svg, path) {
 
     d3.json(path , function(error, data) {
 	if (error) throw error;
-		
+
+	console.log("topics " + data.topics.length)
+	var topicsGroups = svg.selectAll("g")
+	    .data(multiLinesData(data)).enter().append("g").attr("class", "topicGroups")
+
+	console.log("users " + data.users.length)
+	svg.selectAll('.user').data(data.users).enter()
+	    .append('svg:circle')
+	    .attr('r', 2)
+            .style("fill", "lightgrey")
+            .style("fill-opacity", .2)
+	    .append("svg:title")
+	    .text(function(d) {return d.user });
+
+	console.log("articles " + data.articles.length)
 	svg.selectAll('.point').data(data.articles).enter()
 	    .append('svg:circle')
 	    .attr('r', 4)
             .style("fill", function(d) { return sectionsToColor[d.section] })
             .style("fill-opacity", .4)
 	    .append("svg:title")
-	    .text(function(d) {return d.title });
-
+	    .text(function(d) {return d.section + ": " + d.title });
+	
 	var x = featureNames[0]
 	var y = featureNames[1]
 	
 	console.info("selected:" + x + " " + y)
-
+	
 	var scales = getScale(x, y)	
-	
-	var topicsGroups = svg.selectAll("g")
-	    .data(multiLinesData(data)).enter().append("g").attr("class", "topicGroups")
-	
-	var topicLineFunction = d3.svg.line()
-	    .x(function(d) { return scales.x(d[x]) })
-	    .y(function(d) { return scales.y(d[y]) })
-	    .interpolate("linear")
-	
+			
 	var multilineGraph = topicsGroups
 	    .append("path")
 	    .attr("id", function(d) { return d.id})
 	    .attr("class", "topicLine")
 	    .attr("d", function(d) { return topicLine(scales, x, y)(d.vector)})
-	    .attr("stroke", "blue")
+	    .attr("stroke", "black")
 	    .attr("stroke-width", 2)
 	    .attr("fill", "none")
 
@@ -41,22 +58,21 @@ function show(svg, path) {
 	    .attr('startOffset', '50%')
 	    .attr('xlink:href', function (d) {return '#' + d.id})
 	    .text(function (d) {return d.words})
-	    .attr("fill", "blue")
-	    	
-	console.info("scales")
-
-	draw(scales, svg.selectAll('circle'), featureNames[0], featureNames[1])
+	    .attr("fill", "black")
+	    		
+	d3.selectAll(".topicGroups")
+	    .call(function(s) { return filterTopics(s, x, y)})
 	
+	svg.selectAll('circle').call(function(d) { return drawArticles(d, scales, featureNames[0], featureNames[1])})
+
 	svg.select(".xLabel").on("click", function() { switchDimension("X")})
 	svg.select(".yLabel").on("click", function() { switchDimension("Y")})
-
     });
 }
 
 function topicLine(scales, x, y) {
-    console.log("line func")
     var lineFunction = d3.svg.line()
-	.x(function(d) { console.log(d); return scales.x(d[x]) })
+	.x(function(d) { return scales.x(d[x]) })
 	.y(function(d) { return scales.y(d[y]) })
 	.interpolate("linear")
     return lineFunction
@@ -83,10 +99,10 @@ function multiLinesData(data) {
     return multiLines
 }
 
-function draw(scales, svgCircles, featureForX, featureForY) {
-    svgCircles
-	.attr('cx', function(d) { return scales.x(d[featureForX]) })
-	.attr('cy', function(d) { return scales.y(d[featureForY]) })
+function drawArticles(articleCircles, scales, x, y) {
+    articleCircles
+	.attr('cx', function(d) { return scales.x(d[x]) })
+	.attr('cy', function(d) { return scales.y(d[y]) })
 }
 
 function getScale(featureForX, featureForY) { 
@@ -151,7 +167,7 @@ function getScale(featureForX, featureForY) {
 }
 
 function switchDimension(dims) {
-    console.log("switchDimension")
+    console.log("switchDimension " + dims)
 
     var indexOfFeatureForX = featureNames.indexOf( svg.select(".xLabel").text() )
     var indexOfFeatureForY = featureNames.indexOf( svg.select(".yLabel").text() )
@@ -166,22 +182,26 @@ function switchDimension(dims) {
     var x = featureNames[indexOfFeatureForX]
     var y = featureNames[indexOfFeatureForY]
     var scales = getScale(x, y)
+
+    svg.selectAll('circle')
+	.transition().duration(2000)
+	.call(function(d) { return drawArticles(d, scales, x, y)})
     
-    	//.attr("d", line(scales, x, y)(xys))
-
-    draw(scales, svg.selectAll('circle').transition().duration(2000), x, y)
-
     svg.selectAll('.topicLine')
 	.transition().duration(2000)
 	.attr("d", function(d) { return topicLine(scales, x, y)(d.vector)})
 
     d3.selectAll(".topicGroups")
+	.call(function(s) { return filterTopics(s, x, y)})
+}
+
+function filterTopics(topicGroups, x, y) {
+    return topicGroups
 	.style("visibility", "hidden")
-	.filter(function(d) {  return topicVectorLength(d, x, y) > .2 })
+	.filter(function(d) {  return topicVectorLength(d, x, y) > .1 })
 	.style("visibility", "visible")
 }
 
 function topicVectorLength(d, x, y) {
-    console.log(d.vector[1])
     return Math.sqrt(d.vector[1][x] * d.vector[1][x] + d.vector[1][y] * d.vector[1][y])
 }
