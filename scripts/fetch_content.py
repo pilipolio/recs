@@ -42,6 +42,3 @@ response = es.search(index='ap', doc_type='article', fields='_id,categories,publ
 import json
 with open('ap_article_content_es.json', 'w') as f:
     json.dump(response, fp=f)
-unique_viewed_article_ids = set(r.split('\n')[0].split(',')[3] for r in open("/Users/gui/Data/user_events_csv_1_file.csv"))
-
-content_article_ids = [c['_id'] for c in response['hits']['hits']]

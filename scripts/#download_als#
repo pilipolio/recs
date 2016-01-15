@@ -1,0 +1,17 @@
+from boto.s3.connection import S3Connection, Bucket, Key
+from itertools import chain, imap
+import json
+
+conn = S3Connection("AKIAIEYUCWOUVYKAQZQQ", "OVrZrdwaDOKhKIej1bX9auVnMFU1B0ctMlJZZaWi")
+b = Bucket(conn, "schibsted-spt-analytics-dev")
+
+user_model_key_prefix = "guillaume/models/als-ap/users"
+
+user_features_keys = filter(lambda k: '_SUCCESS' not in k.name, b.list(user_model_key_prefix))
+
+def get_lines(key):
+    print(key.name)
+    return key.get_contents_as_string().split('\n')
+
+all_user_features_lines = list(chain.from_iterable(imap(get_lines, user_features_keys)))
+all_article_features = map(json.loads, filter(len, all_article_features_lines))
